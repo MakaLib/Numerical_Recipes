@@ -45,7 +45,7 @@ bool isOperatorAtTheEnd(char *&expression, int size)
 }
 
 
-//OK
+//Sprawdza ilosc otwierajacych nawiasow (OK)
 int howManyOpeningBrackets( char *&expression)
 {
 	int count = 0;
@@ -56,7 +56,7 @@ int howManyOpeningBrackets( char *&expression)
 	return count;
 }
 
-//OK
+//Sprawdza ilosc zamykajacych nawiasow (OK)
 int howManyClosingBrackets( char *&expression)
 {
 	int count = 0;
@@ -67,7 +67,7 @@ int howManyClosingBrackets( char *&expression)
 	return count;
 }
 
-//ALe to jest glupie ale chyba dziaa choc nie tak jak chcialem TODO porpawic co sie da
+//Pobiera poczatkowy i koncowy indeks najbardziej zagniezdzonego nawiasu i przypisuje poczatkowy-startIndex, koncowy-endIndex (OK)
 bool getBracketStartAndEndIndex(char *&expression, int &startIndex, int &endIndex, int &error)
 {
 	//zagniezdzenie
@@ -104,9 +104,9 @@ bool getBracketStartAndEndIndex(char *&expression, int &startIndex, int &endInde
 					endIndex = inWhichInside[max][2];
 					for(int i = 0; i < amountOfBrackets; i++)
 					{
-						delete inWhichInside[i];
+						delete[] inWhichInside[i];
 					}
-					delete inWhichInside;
+					delete[] inWhichInside;
 					return true;
 				}
 			}
@@ -122,7 +122,7 @@ bool getBracketStartAndEndIndex(char *&expression, int &startIndex, int &endInde
 	return false;
 }
 
-//modyfikuje stringa do kolejnych obliczen (gdy sa wyrazenia w nawiasach)
+//modyfikuje stringa(expression) do nowej postaci bez nawiasow (gdy sa wyrazenia w nawiasach)(OK)
 void modify(char *&expression,  char *toWrite,  int startIndex,  int endIndex, int size, int miniSize)
 {
 
@@ -151,7 +151,7 @@ void modify(char *&expression,  char *toWrite,  int startIndex,  int endIndex, i
 		j++;
 	}
 	newExpression[tempsize] = '\0';
-	delete expression;
+	delete[] expression;
 	expression = new char[tempsize+1];
 	for(int i = 0; i < tempsize; i++ )
 	{
@@ -160,16 +160,15 @@ void modify(char *&expression,  char *toWrite,  int startIndex,  int endIndex, i
 			expression[i] = '\0';
 	}
 	expression[tempsize] = '\0';
-	delete newExpression;
+	delete[] newExpression;
 }
 
-//modyfikuje stringa do kolejnych obliczen (gdy nie ma juz nawiasow)
+//modyfikuje stringa(expression) do nowej postaci (gdy nie ma juz nawiasow) (OK)
 void modify2(char *&expression, char *toWrite,int startIndex, int endIndex, int size, int miniSize)
 {
 	int newSize = size + miniSize + 1 - (endIndex - startIndex);
 	char *newExpression = new char[newSize+1];
-	for(int i = 0; i < newSize; i++) newExpression[i] = 'a';
-
+	for(int i = 0; i < newSize; i++) newExpression[i] = ' ';
 	for(int i = 0; i < miniSize; i++)
 	{
 		newExpression[i] = toWrite[i];
@@ -177,22 +176,26 @@ void modify2(char *&expression, char *toWrite,int startIndex, int endIndex, int 
 	int j = 1;
 	for(int i = miniSize; i < newSize; i++)
 	{
-		newExpression[i] = expression[endIndex+j];
+		if((unsigned)(endIndex + j) < strlen(expression))
+			newExpression[i] = expression[endIndex+j];
+		else
+		 newExpression[i] = '\0';
+		
 		j++;
 	}
 
 	newExpression[newSize] = '\0';
-	delete expression;
+	delete[] expression;
 	expression = new char[newSize+1];
 	for(int i = 0; i < newSize; i++)
 	{
 		expression[i] = newExpression[i];
 	}
 	expression[newSize] = '\0';
-	delete newExpression;
+	delete[] newExpression;
 }
 
-//Zwraca najblizszy operator
+//Zwraca najblizszy operator od danego indeksu, gdy nie znajdzie zwraca '+' i ustala error (OK)
 char getOperator(char *&expression, int startIndex, int &error)
 {
 	for(unsigned i = startIndex; i < strlen(expression); i++)
@@ -207,13 +210,12 @@ char getOperator(char *&expression, int startIndex, int &error)
 	return '+';
 }
 
-//Przygotowuje liczby do obliczenia (dla nawiasow)
-int getResultWithBrackets(char *& workableExpression, int startIndex, int endIndex, int &error)
+//Przygotowuje string(workableExpression) do obliczenia (dla nawiasow) (OK)
+int getResultWithBrackets(char *&workableExpression, int startIndex, int endIndex, int &error)
 {
-	//char *digitOne;
+
 	int sizeOne = 0;
 	int startOne = 0;
-	//char *digitTwo;
 	int sizeTwo = 0;
 	int startTwo = 0;
 	char oper = getOperator(workableExpression,startIndex,error);
@@ -241,9 +243,10 @@ int getResultWithBrackets(char *& workableExpression, int startIndex, int endInd
 		i++;
 	}
 
-	char *digitOne =  new char[sizeOne];
+	char *digitOne =  new char[sizeOne+1];
 	for(int j = 0; j < sizeOne; j++)
 		digitOne[j] = workableExpression[startOne+j];
+	digitOne[sizeOne] = '\0';
 	int tempResult;
 	int newSize;
 
@@ -253,29 +256,33 @@ int getResultWithBrackets(char *& workableExpression, int startIndex, int endInd
 	}
 	else
 	{
-		char *digitTwo = new char[sizeTwo];
+		char *digitTwo = new char[sizeTwo+1];
 		for(int j = 0; j < sizeTwo; j++)
 			digitTwo[j] = workableExpression[startTwo+j];
+		digitTwo[sizeTwo] = '\0';
 		tempResult = makeOperation(atoi(digitOne),oper, atoi(digitTwo),newSize,error);
-		delete digitTwo;
+		delete[] digitTwo;
 	}	
-	char *newExpressionToWrite = new char[newSize];
+	char *newExpressionToWrite = new char[newSize+1];
+	for(int a = 0; a < newSize; a++)
+		newExpressionToWrite[a] = ' ';
+	newExpressionToWrite[newSize] = '\0';
 	sprintf(newExpressionToWrite,"%d", tempResult);
 	modify(workableExpression,newExpressionToWrite,startIndex,endIndex,strlen(workableExpression),newSize);
 	
-	delete digitOne;
-	delete newExpressionToWrite;
+	delete[] digitOne;
+	delete[] newExpressionToWrite;
 	return tempResult;
 }
 
-//Przygotowuje liczby to obliczenia (gdy nie ma nawiasow)
-int getResultWithoutBrackets(char *& workableExpression, int &error)
+//Przygotowuje string(workableExpression) do obliczenia (gdy nie ma nawiasow) (OK)
+int getResultWithoutBrackets(char *&workableExpression, int &error)
 {
 	int sizeOne = 0;
 	int startOne = 0;
 	int sizeTwo = 0;
 	int startTwo = 0;
-	char oper= '.';
+	char oper;
 	int flag = 1;
 	int i = 0;
 	
@@ -311,9 +318,10 @@ int getResultWithoutBrackets(char *& workableExpression, int &error)
 
 	if(workableExpression[i+1] == oper) i++;
 	else i--;
-	char *digitOne = new char[sizeOne];
+	char *digitOne = new char[sizeOne+1];
 	for(int j = 0; j < sizeOne; j++)
 		digitOne[j] = workableExpression[startOne+j];
+	digitOne[sizeOne] = '\0';
 
 	int newSize;
 	int tempResult;
@@ -324,19 +332,23 @@ int getResultWithoutBrackets(char *& workableExpression, int &error)
 	}
 	else
 	{
-		char *digitTwo = new char[sizeTwo];
+		char *digitTwo = new char[sizeTwo+1];
 		for(int j = 0; j < sizeTwo; j++)
 			digitTwo[j] = workableExpression[startTwo+j];
+		digitTwo[sizeTwo] = '\0';
 		tempResult = makeOperation(atoi(digitOne),oper, atoi(digitTwo),newSize,error);
-		delete digitTwo;
+		delete[] digitTwo;
 	}
 	
-	char *newExpressionToWrite = new char[newSize];
+	char *newExpressionToWrite = new char[newSize+1];
+	for(int a = 0; a < newSize; a++)
+		newExpressionToWrite[a] = ' ';
+	newExpressionToWrite[newSize] = '\0';
 	sprintf(newExpressionToWrite,"%d", tempResult);
 	modify2(workableExpression,newExpressionToWrite,startOne,i,strlen(workableExpression),newSize);
 
-	delete digitOne;
-	delete newExpressionToWrite;
+	delete[] digitOne;
+	delete[] newExpressionToWrite;
 	return tempResult;
 }
 
@@ -369,7 +381,7 @@ int calculate(const char *expression, double *result)
 		}
 	}
 
-	delete workableExpression;
+	delete[] workableExpression;
 	*result = resultToWrite;
 
 	return error;
@@ -442,6 +454,15 @@ int main()
 
 	printf("PRZYPADEK 6 ");
 	if(0 == (retavl = calculate("2 (1 -) 4 5 +",&result)))
+	{
+		printf("Result: %g\n", result);
+	}
+	else
+	{
+		printf("Error: %d\n", retavl);
+	}
+
+	if(0 == (retavl = calculate("6 7 * 8 + 2 - (6 7 *) +",&result)))
 	{
 		printf("Result: %g\n", result);
 	}
